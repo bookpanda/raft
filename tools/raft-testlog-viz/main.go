@@ -299,7 +299,7 @@ func main() {
 		if tl.status != "PASS" {
 			statusSummary = tl.status
 		}
-		emitTestViz("./temp", tl)
+		emitTestViz("../temp", tl)
 		fmt.Println("")
 	}
 
