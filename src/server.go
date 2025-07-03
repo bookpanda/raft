@@ -136,8 +136,3 @@ func (s *Server) Call(id int, serviceMethod string, args any, reply any) error {
 		return peer.Call(serviceMethod, args, reply)
 	}
 }
-
-// simluate delays/drops in the network
-type RPCProxy struct {
-	cm *ConsensusModule
-}

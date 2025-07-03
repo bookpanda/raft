@@ -92,3 +92,11 @@ func (cm *ConsensusModule) dlog(format string, args ...any) {
 		log.Printf(format, args...)
 	}
 }
+
+func (cm *ConsensusModule) RequestVote(args RequestVoteArgs, reply *RequestVoteReply) error {
+	panic("RequestVote not implemented")
+}
+
+func (cm *ConsensusModule) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply) error {
+	panic("AppendEntries not implemented")
+}
