@@ -114,7 +114,7 @@ func (s *Server) ConnectToPeer(peerId int, addr net.Addr) error {
 	return nil
 }
 
-func (s *Server) DisconnectFromPeer(peerId int) error {
+func (s *Server) DisconnectPeer(peerId int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if client, ok := s.peerClients[peerId]; ok && client != nil {
