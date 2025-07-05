@@ -132,6 +132,7 @@ func (cm *ConsensusModule) Stop() {
 	defer cm.mu.Unlock()
 	cm.state = Dead
 	cm.dlog("becomes dead")
+	close(cm.newCommitReadyChan)
 }
 
 // logs a debug if DebugCM config > 0.
