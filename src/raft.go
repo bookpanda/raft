@@ -68,7 +68,7 @@ func NewConsensusModule(id int, peerIds []int, server *Server, ready <-chan any)
 		cm.mu.Lock()
 		cm.electionResetEvent = time.Now()
 		cm.mu.Unlock()
-		// cm.RunElectionTimer()
+		cm.runElectionTimer()
 	}()
 
 	return cm
