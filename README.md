@@ -34,3 +34,10 @@
 - prevent a candidate from winning an election unless its log is at least as up-to-date as a majority of peers in the cluster
 - RV args: `lastLogIndex`, `lastLogTerm`, followers compare these fields to their own and decide whether the candidate is sufficiently up-to-date to be elected
 - this also prevents `runaway` leaders from being elected, i.e. leaders that have no log entries or have stale log entries but higher term (e.g. they are separated due to network partition then rejoin)
+
+## 3. Persistence, Optimizations
+### Persistence
+- needs only to persist currentTerm, votedFor, and log entries
+### Delivery
+- Raft = `at least once` delivery
+- commands should have unique IDs to prevent duplicates
