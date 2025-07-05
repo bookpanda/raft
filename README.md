@@ -1,4 +1,8 @@
 # raft
+```bash
+./dotest.sh TestElectionFollowerComesBack
+```
+
 ## 1. Elections
 - higher term = higher priority
 
@@ -16,6 +20,12 @@
 
 ## 2. Commands and log replication
 - client sends command to leader
-```bash
-./dotest.sh TestElectionFollowerComesBack
-```
+- leader appends command to its log
+- leader sends AppendEntries RPC to followers with new log entry
+- followers append entry to their log and send back success response
+- leader waits for majority of followers to respond
+- if majority respond, leader commits the entry and sends CommitEntry to commitChan
+
+### 2 RPC round-trips to commit a command
+1. leader sends next log entries to followers
+2. leader sends updated commit index to followers, who will then mark these entries as committed and will send them on the commit channel

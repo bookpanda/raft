@@ -190,7 +190,45 @@ func (cm *ConsensusModule) AppendEntries(args AppendEntriesArgs, reply *AppendEn
 			cm.becomeFollower(args.Term)
 		}
 		cm.electionResetEvent = time.Now()
-		reply.Success = true
+
+		// does our log contain an entry at PrevLogIndex whose term matches PrevLogTerm?
+		// or is PrevLogIndex -1, meaning no previous log entry
+		if args.PrevLogIndex == -1 ||
+			(args.PrevLogIndex < len(cm.log) && args.PrevLogTerm == cm.log[args.PrevLogIndex].Term) {
+			reply.Success = true
+
+			logInsertIndex := args.PrevLogIndex + 1
+			newEntriesIndex := 0
+
+			for {
+				if logInsertIndex >= len(cm.log) || newEntriesIndex >= len(args.Entries) {
+					break
+				}
+				if cm.log[logInsertIndex].Term != args.Entries[newEntriesIndex].Term {
+					break
+				}
+				logInsertIndex++
+				newEntriesIndex++
+			}
+			// at the end of loop:
+			// - logInsertIndex points at the end of the log, or an index where the
+			//   term mismatches with an entry from the leader
+			// - newEntriesIndex points at the end of Entries, or an index where the
+			//   term mismatches with the corresponding log entry
+			if newEntriesIndex < len(args.Entries) {
+				cm.dlog("... inserting entries %v from index %d", args.Entries[newEntriesIndex:], logInsertIndex)
+				// if follower log has conflicting entries, they are deleted
+				cm.log = append(cm.log[:logInsertIndex], args.Entries[newEntriesIndex:]...)
+				cm.dlog("... log is now: %v", cm.log)
+			}
+
+			// set commit index
+			if args.LeaderCommit > cm.commitIndex {
+				cm.commitIndex = min(args.LeaderCommit, len(cm.log)-1)
+				cm.dlog("... setting commitIndex=%d", cm.commitIndex)
+				cm.newCommitReadyChan <- struct{}{}
+			}
+		}
 	}
 
 	reply.Term = cm.currentTerm
