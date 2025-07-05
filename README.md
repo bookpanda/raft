@@ -29,3 +29,8 @@
 ### 2 RPC round-trips to commit a command
 1. leader sends next log entries to followers
 2. leader sends updated commit index to followers, who will then mark these entries as committed and will send them on the commit channel
+
+### Election Safety
+- prevent a candidate from winning an election unless its log is at least as up-to-date as a majority of peers in the cluster
+- RV args: `lastLogIndex`, `lastLogTerm`, followers compare these fields to their own and decide whether the candidate is sufficiently up-to-date to be elected
+- this also prevents `runaway` leaders from being elected, i.e. leaders that have no log entries or have stale log entries but higher term (e.g. they are separated due to network partition then rejoin)

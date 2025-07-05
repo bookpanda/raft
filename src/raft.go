@@ -158,7 +158,7 @@ func (cm *ConsensusModule) RequestVote(args RequestVoteArgs, reply *RequestVoteR
 
 	if cm.currentTerm == args.Term &&
 		(cm.votedFor == -1 || cm.votedFor == args.CandidateId) &&
-		(args.LastLogTerm > lastLogTerm ||
+		(args.LastLogTerm > lastLogTerm || // candidate's log is up-to-date
 			(args.LastLogTerm == lastLogTerm && args.LastLogIndex >= lastLogIndex)) {
 		reply.VoteGranted = true
 		cm.votedFor = args.CandidateId
@@ -293,13 +293,19 @@ func (cm *ConsensusModule) startElection() {
 	// send RequestVote to others concurrently
 	for _, peerId := range cm.peerIds {
 		go func() {
+			cm.mu.Lock()
+			savedLastLogIndex, savedLastLogTerm := cm.lastLogIndexAndTerm()
+			cm.mu.Unlock()
+
 			args := RequestVoteArgs{
-				Term:        savedCurrentTerm,
-				CandidateId: cm.id,
+				Term:         savedCurrentTerm,
+				CandidateId:  cm.id,
+				LastLogIndex: savedLastLogIndex,
+				LastLogTerm:  savedLastLogTerm,
 			}
-			var reply RequestVoteReply
 
 			cm.dlog("sending RequestVote to %d: %+v", peerId, args)
+			var reply RequestVoteReply
 			if err := cm.server.Call(peerId, "ConsensusModule.RequestVote", args, &reply); err != nil {
 				return
 			}
