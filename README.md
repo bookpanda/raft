@@ -41,3 +41,17 @@
 ### Delivery
 - Raft = `at least once` delivery
 - commands should have unique IDs to prevent duplicates
+
+## 4. Raft in distributed KV
+- kvclient sends HTTP request to kvservice
+    - tries all services until it gets a response from leader service
+- kvservice handles HTTP request: get, put, cas
+    - submits directly to raft log (if it's leader)
+    - if not leader, returns error
+- kvservice runs updater goroutine to update datastore when raft commits
+- kvclient waits for commit on the subscription channel
+    - if it's our command, all is good, else = lost leadership, return error to client
+> Note: get, put, cas are idempotent, so it's safe to retry
+
+## 5. Exactly-once delivery
+suppose we want to add `append` command, which is not idempotent
