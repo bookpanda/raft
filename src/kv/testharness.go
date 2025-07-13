@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eliben/raft/part3/raft"
-	"github.com/eliben/raft/part4kv/kvclient"
-	"github.com/eliben/raft/part4kv/kvservice"
+	"github.com/bookpanda/raft/kv/kvclient"
+	"github.com/bookpanda/raft/kv/kvservice"
+	"github.com/bookpanda/raft/raft"
 )
 
 func init() {
