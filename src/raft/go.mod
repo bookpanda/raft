@@ -1,4 +1,4 @@
-module github.com/bookpanda/raft
+module github.com/bookpanda/raft/src/raft
 
 go 1.23.1
 
