@@ -1,4 +1,5 @@
 # raft
+[Raft implementation reference](https://eli.thegreenplace.net/2020/implementing-raft-part-0-introduction/)
 ```bash
 ./dotest.sh TestElectionFollowerComesBack
 ```
@@ -55,3 +56,17 @@
 
 ## 5. Exactly-once delivery
 suppose we want to add `append` command, which is not idempotent
+- currently, client retries command on many services, so it's not exactly once
+- solve by adding serial no. to each command
+
+### Delivery guarantees
+1. at most once: logs, telemetry
+    - added client retries, becomes at least once
+2. at least once
+    - added de-duplication (command ID), becomes exactly once
+3. exactly once
+
+> If you can get at-least-once delivery, you can build exactly-once on top of that
+
+even w/o `append`, we still should ensure exactly-once delivery e.g. to prevent lost updates
+![lost update](https://eli.thegreenplace.net/images/2024/retry-put-not-linearizable.png)
