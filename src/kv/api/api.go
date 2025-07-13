@@ -1,13 +1,15 @@
 package api
 
-// api between kv service and client
-type PutRequest struct {
-	Key   string
-	Value string
-}
-
 type Response interface {
 	Status() ResponseStatus
+}
+
+// api between kv service and client
+type PutRequest struct {
+	Key       string
+	Value     string
+	ClientID  int64
+	RequestID int64
 }
 
 type PutResponse struct {
@@ -20,8 +22,27 @@ func (pr *PutResponse) Status() ResponseStatus {
 	return pr.RespStatus
 }
 
+type AppendRequest struct {
+	Key       string
+	Value     string
+	ClientID  int64
+	RequestID int64
+}
+
+type AppendResponse struct {
+	RespStatus ResponseStatus
+	KeyFound   bool
+	PrevValue  string
+}
+
+func (ar *AppendResponse) Status() ResponseStatus {
+	return ar.RespStatus
+}
+
 type GetRequest struct {
-	Key string
+	Key       string
+	ClientID  int64
+	RequestID int64
 }
 
 type GetResponse struct {
@@ -38,6 +59,8 @@ type CASRequest struct {
 	Key          string
 	CompareValue string
 	Value        string
+	ClientID     int64
+	RequestID    int64
 }
 
 type CASResponse struct {
@@ -57,13 +80,15 @@ const (
 	StatusOK
 	StatusNotLeader
 	StatusFailedCommit
+	StatusDuplicateRequest
 )
 
 var responseName = map[ResponseStatus]string{
-	StatusInvalid:      "invalid",
-	StatusOK:           "OK",
-	StatusNotLeader:    "NotLeader",
-	StatusFailedCommit: "FailedCommit",
+	StatusInvalid:          "invalid",
+	StatusOK:               "OK",
+	StatusNotLeader:        "NotLeader",
+	StatusFailedCommit:     "FailedCommit",
+	StatusDuplicateRequest: "DuplicateRequest",
 }
 
 func (rs ResponseStatus) String() string {

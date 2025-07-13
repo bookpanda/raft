@@ -21,7 +21,8 @@ type KVClient struct {
 	// index of the service we assume is the current leader
 	assumedLeader int
 
-	clientID int32
+	clientID  int64
+	requestID atomic.Int64
 }
 
 func New(serviceAddrs []string) *KVClient {
@@ -32,21 +33,37 @@ func New(serviceAddrs []string) *KVClient {
 	}
 }
 
-var clientCount atomic.Int32
+var clientCount atomic.Int64
 
 func (c *KVClient) Put(ctx context.Context, key string, value string) (string, bool, error) {
 	putReq := api.PutRequest{
-		Key:   key,
-		Value: value,
+		Key:       key,
+		Value:     value,
+		ClientID:  c.clientID,
+		RequestID: c.requestID.Add(1),
 	}
 	var putResp api.PutResponse
 	err := c.send(ctx, "put", putReq, &putResp)
 	return putResp.PrevValue, putResp.KeyFound, err
 }
 
+func (c *KVClient) Append(ctx context.Context, key string, value string) (string, bool, error) {
+	appendReq := api.AppendRequest{
+		Key:       key,
+		Value:     value,
+		ClientID:  c.clientID,
+		RequestID: c.requestID.Add(1),
+	}
+	var appendResp api.AppendResponse
+	err := c.send(ctx, "append", appendReq, &appendResp)
+	return appendResp.PrevValue, appendResp.KeyFound, err
+}
+
 func (c *KVClient) Get(ctx context.Context, key string) (string, bool, error) {
 	getReq := api.GetRequest{
-		Key: key,
+		Key:       key,
+		ClientID:  c.clientID,
+		RequestID: c.requestID.Add(1),
 	}
 	var getResp api.GetResponse
 	err := c.send(ctx, "get", getReq, &getResp)
@@ -58,6 +75,8 @@ func (c *KVClient) CAS(ctx context.Context, key string, compare string, value st
 		Key:          key,
 		CompareValue: compare,
 		Value:        value,
+		ClientID:     c.clientID,
+		RequestID:    c.requestID.Add(1),
 	}
 	var casResp api.CASResponse
 	err := c.send(ctx, "cas", casReq, &casResp)
@@ -110,6 +129,9 @@ FindLeader:
 		case api.StatusFailedCommit:
 			retryCtxCancel()
 			return fmt.Errorf("commit failed; please retry")
+		case api.StatusDuplicateRequest:
+			retryCtxCancel()
+			return fmt.Errorf("this request was already completed")
 		default:
 			panic("unreachable")
 		}
